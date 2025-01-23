@@ -1,0 +1,31 @@
+### Variables
+@host = http://localhost:9080
+
+### Get Hello Message
+GET {{host}}/hello
+Accept: application/json
+
+### Echo Message (Empty body)
+POST {{host}}/echo
+Content-Type: application/json
+
+### Echo Message with Text
+POST {{host}}/echo
+Content-Type: text/plain
+
+Hello, this is a test message!
+
+### Echo Message with JSON
+POST {{host}}/echo
+Content-Type: application/json
+
+{
+    "message": "Hello from JSON",
+    "timestamp": "2025-01-23T19:26:16+05:30"
+}
+
+### Get SNMP System Info (Default parameters)
+GET {{host}}/snmp/info
+
+### Get SNMP System Info (Custom parameters)
+GET {{host}}/snmp/info?host=localhost&community=public&oid=1.3.6.1.2.1.1.1.0
