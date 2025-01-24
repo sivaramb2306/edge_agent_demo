@@ -48,7 +48,7 @@ private:
         try {
             // Get query parameters with defaults
             auto query = request.query();
-            std::string host = "localhost";
+            std::string host = "snmpd";
             std::string community = "public";
             std::string oid = "1.3.6.1.2.1.1.1.0";
 

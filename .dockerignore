@@ -1,0 +1,8 @@
+.git
+.gitignore
+*.o
+rest_server
+pistache/
+README.md
+Dockerfile
+.dockerignore

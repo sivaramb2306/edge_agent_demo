@@ -63,6 +63,7 @@ public:
         );
 
         std::string result;
+
         if (status == STAT_SUCCESS && response_ptr->errstat == SNMP_ERR_NOERROR) {
             for (netsnmp_variable_list* vars = response_ptr->variables; 
                  vars; 
@@ -76,5 +77,9 @@ public:
         }
 
         return result;
+    }
+
+    ~SNMPClient() {
+        snmp_shutdown("edge_agent");
     }
 };
