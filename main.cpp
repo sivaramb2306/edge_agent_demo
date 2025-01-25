@@ -72,46 +72,55 @@ private:
     }
 
     void getSNMPByMib(const Rest::Request& request, Http::ResponseWriter response) {
-        try {
-            auto query = request.query();
-            if (!query.has("mib")) {
-                throw std::runtime_error("Missing required 'mib' parameter");
-            }
-
-            std::string mibName = query.get("mib").value();
-            std::string host = query.has("host") ? query.get("host").value() : "snmpd";
-            std::string community = query.has("community") ? query.get("community").value() : "public";
-
-            // Handle multiple MIBs separated by comma
-            std::vector<std::string> mibNames;
-            std::stringstream ss(mibName);
-            std::string mib;
-            while (std::getline(ss, mib, ',')) {
-                mibNames.push_back(mib);
-            }
-
-            json responseJson;
-            if (mibNames.size() == 1) {
-                auto result = snmpClient->getMibValue(mibNames[0], host, community);
-                responseJson = {
-                    {"status", "success"},
-                    {"data", {
-                        {mibNames[0], result}
-                    }}
-                };
-            } else {
-                auto results = snmpClient->getMibValues(mibNames, host, community);
-                responseJson = {
-                    {"status", "success"},
-                    {"data", results}
-                };
-            }
-
-            response.send(Http::Code::Ok, responseJson.dump());
-        } catch (const std::exception& e) {
+        auto query = request.query();
+        auto mibParam = query.get("mib");
+        auto hostParam = query.get("host");
+        
+        if (!mibParam || !hostParam) {
             json errorJson = {
                 {"status", "error"},
-                {"message", e.what()}
+                {"message", "Missing required parameters: 'mib' and 'host'"}
+            };
+            response.send(Http::Code::Bad_Request, errorJson.dump());
+            return;
+        }
+
+        std::string mibName = *mibParam;
+        std::string host = *hostParam;
+        std::string community = query.get("community").value_or("public");
+
+        try {
+            // Convert MIB name to OID
+            std::string oid = snmpClient->mibToOid(mibName);
+            if (oid.empty()) {
+                json errorJson = {
+                    {"status", "error"},
+                    {"message", "Invalid MIB name or conversion failed"}
+                };
+                response.send(Http::Code::Bad_Request, errorJson.dump());
+                return;
+            }
+
+            // Query the SNMP device
+            std::string value = snmpClient->getMibValue(mibName, host, community);
+            
+            // Create JSON response
+            json responseJson = {
+                {"status", "success"},
+                {"data", {
+                    {"mib", mibName},
+                    {"oid", oid},
+                    {"value", value},
+                    {"host", host}
+                }}
+            };
+            
+            response.send(Http::Code::Ok, responseJson.dump());
+        }
+        catch (const std::exception& e) {
+            json errorJson = {
+                {"status", "error"},
+                {"message", std::string("SNMP query failed: ") + e.what()}
             };
             response.send(Http::Code::Internal_Server_Error, errorJson.dump());
         }

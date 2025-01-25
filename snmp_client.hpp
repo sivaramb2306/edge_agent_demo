@@ -57,36 +57,30 @@ public:
         shutdown_mib();
     }
 
-    // Convert MIB name to OID using snmptranslate
+    // Convert MIB name to OID using Net-SNMP library functions
     std::string mibToOid(const std::string& mibName) override {
-        // Create the snmptranslate command
-        std::string cmd = "snmptranslate -m ./mibs/PowerNet-MIB.txt -IR -On " + mibName;
+        oid objid[MAX_OID_LEN];
+        size_t objidlen = MAX_OID_LEN;
         
-        // Execute the command and capture output
-        FILE* pipe = popen(cmd.c_str(), "r");
-        if (!pipe) {
-            throw std::runtime_error("Failed to execute snmptranslate command");
-        }
+        // Initialize MIB
+        netsnmp_init_mib();
         
-        // Read the output
-        char buffer[128];
-        std::string result;
-        while (!feof(pipe)) {
-            if (fgets(buffer, 128, pipe) != nullptr) {
-                result += buffer;
-            }
-        }
-        pclose(pipe);
-        
-        // Trim any whitespace or newlines
-        result.erase(0, result.find_first_not_of(" \n\r\t"));
-        result.erase(result.find_last_not_of(" \n\r\t") + 1);
-        
-        if (result.empty()) {
+        // Convert MIB name to OID
+        if (!snmp_parse_oid(mibName.c_str(), objid, &objidlen)) {
             throw std::runtime_error("Failed to convert MIB to OID: " + mibName);
         }
         
-        return result;
+        // Convert OID to string
+        char oidStr[MAX_OID_LEN * 4];  // Should be plenty of space
+        size_t len = 0;
+        
+        // Format each number with dots
+        for (size_t i = 0; i < objidlen; i++) {
+            len += snprintf(oidStr + len, sizeof(oidStr) - len, "%s%lu", 
+                          (i == 0 ? "." : "."), (unsigned long)objid[i]);
+        }
+        
+        return std::string(oidStr);
     }
 
     // Get SNMP value using MIB name

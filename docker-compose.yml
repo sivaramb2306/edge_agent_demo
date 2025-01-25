@@ -20,7 +20,7 @@ services:
   edge-agent:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: ${DOCKERFILE:-Dockerfile}
     container_name: edge-agent
     ports:
       - "9082:9081"
@@ -35,6 +35,7 @@ services:
       - SNMP_COMMUNITY=public
     volumes:
       - ./config:/app/config
+      - ${PWD:-.}:/app  # Source code mounted for development
 
 networks:
   edge-network:

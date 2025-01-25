@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Find required packages
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(PISTACHE REQUIRED libpistache)
-find_package(GTest REQUIRED)
+find_package(GTest REQUIRED COMPONENTS GTest GMock)
 find_package(nlohmann_json REQUIRED)
 
 # Add NetSNMP
@@ -45,8 +45,8 @@ target_include_directories(snmp_client_test PRIVATE
 )
 
 target_link_libraries(snmp_client_test
-    GTest::GTest
-    GTest::Main
+    GTest::gtest
+    GTest::gtest_main
     GTest::gmock
     GTest::gmock_main
     ${NETSNMP_LIBRARY}

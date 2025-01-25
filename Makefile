@@ -6,7 +6,7 @@ TARGET = rest_server
 SRCS = main.cpp
 OBJS = $(SRCS:.cpp=.o)
 
-.PHONY: all clean run
+.PHONY: all clean run image dev-image up build-up restart-up
 
 all: $(TARGET)
 
@@ -21,3 +21,32 @@ run: $(TARGET)
 
 clean:
 	rm -f $(OBJS) $(TARGET)
+
+# Docker targets
+image:
+	docker build -t edge-agent:latest -f Dockerfile .
+
+dev-image:
+	docker build -t edge-agent:dev -f Dockerfile.dev .
+
+up:
+	docker-compose up -d
+
+build-up:
+	docker-compose build
+	docker-compose up -d
+
+restart-up:
+	docker-compose down
+	docker-compose up -d
+
+dev-up:
+	DOCKERFILE=Dockerfile.dev docker-compose up -d
+
+dev-build-up:
+	DOCKERFILE=Dockerfile.dev docker-compose build
+	DOCKERFILE=Dockerfile.dev docker-compose up -d
+
+dev-restart-up:
+	DOCKERFILE=Dockerfile.dev docker-compose down
+	DOCKERFILE=Dockerfile.dev docker-compose up -d

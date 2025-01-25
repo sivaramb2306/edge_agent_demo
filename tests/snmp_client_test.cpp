@@ -90,7 +90,7 @@ private:
 
 TEST_F(SNMPClientIntegrationTest, RealClientTest) {
     // Enable Net-SNMP debugging
-    debug_register_tokens("all");
+    debug_register_tokens("parse-mibs,snmp_parse_oid,read_config");
     snmp_set_do_debugging(1);
     
     std::cout << "Current MIBDIRS: " << getenv("MIBDIRS") << std::endl;
@@ -99,7 +99,6 @@ TEST_F(SNMPClientIntegrationTest, RealClientTest) {
     SNMPClient client("./mibs");  // Use our local MIB directory
     
     // Test MIB to OID conversions with PowerNet-MIB
-    // These OIDs are unique to PowerNet-MIB and won't resolve without the file
     std::vector<std::pair<std::string, std::string>> testCases = {
         // Basic UPS identification
         {"PowerNet-MIB::upsBasicIdentModel.0", ".1.3.6.1.4.1.318.1.1.1.1.1.1.0"},
@@ -115,7 +114,9 @@ TEST_F(SNMPClientIntegrationTest, RealClientTest) {
 
     for (const auto& testCase : testCases) {
         const auto& [mibName, expectedOid] = testCase;
-        std::cout << "Attempting to convert " << mibName << std::endl;
+        std::cout << "\nTesting conversion of " << mibName << std::endl;
+        std::cout << "Expected OID: " << expectedOid << std::endl;
+        
         EXPECT_NO_THROW({
             std::string oid = client.mibToOid(mibName);
             std::cout << "Converted OID: " << oid << std::endl;

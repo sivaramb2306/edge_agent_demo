@@ -28,4 +28,16 @@ Content-Type: application/json
 GET {{host}}/snmp/info
 
 ### Get SNMP System Info (Custom parameters)
-GET {{host}}/snmp/info?host=localhost&community=public&oid=1.3.6.1.2.1.1.1.0
+GET {{host}}/snmp/info?host=snmpd&community=public&oid=1.3.6.1.2.1.1.1.0
+
+### Query SNMP using MIB name
+GET {{host}}/snmp/get?mib=SNMPv2-MIB::sysDescr.0&host=snmpd
+
+### Query UPS Basic Identity Model
+GET {{host}}/snmp/get?mib=PowerNet-MIB::upsBasicIdentModel.0&host=snmpd
+
+### Query Battery Management Configuration
+GET {{host}}/snmp/get?mib=PowerNet-MIB::battManConfigCellsperBattery.0&host=snmpd
+
+### Query System Uptime
+GET {{host}}/snmp/get?mib=SNMPv2-MIB::sysUpTime.0&host=snmpd
