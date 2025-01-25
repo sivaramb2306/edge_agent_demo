@@ -1,20 +1,44 @@
 # Build stage
 FROM ubuntu:22.04 AS builder
 
-# Install build dependencies
+# Install basic build tools
 RUN apt-get update && apt-get install -y \
     g++ \
     make \
     cmake \
     git \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install library dependencies
+RUN apt-get update && apt-get install -y \
     libsnmp-dev \
     libcurl4-openssl-dev \
     libssl-dev \
-    rapidjson-dev \
+    nlohmann-json3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install and build GTest
+RUN apt-get update && apt-get install -y \
+    libgtest-dev \
+    google-mock \
+    && rm -rf /var/lib/apt/lists/*
+
+# Build and install GTest
+WORKDIR /usr/src/googletest
+RUN cmake . \
+    && make -j$(nproc) \
+    && cp lib/libgtest*.a /usr/lib/ \
+    && cp lib/libgmock*.a /usr/lib/ \
+    && mkdir -p /usr/include/gtest \
+    && cp -r googletest/include/gtest/* /usr/include/gtest/ \
+    && mkdir -p /usr/include/gmock \
+    && cp -r googlemock/include/gmock/* /usr/include/gmock/
+
+# Install Meson build system
+RUN apt-get update && apt-get install -y \
     python3-pip \
     ninja-build \
-    pkg-config \
-    nlohmann-json3-dev \
     && pip3 install meson \
     && rm -rf /var/lib/apt/lists/*
 
@@ -24,31 +48,40 @@ WORKDIR /app
 # Copy source code
 COPY . .
 
-# Clean any existing build artifacts
-RUN rm -rf build pistache
+# Clone Pistache
+RUN git -c advice.detachedHead=false clone -q https://github.com/pistacheio/pistache.git /tmp/pistache
 
-# Build and install Pistache optimized for production
-RUN git clone https://github.com/pistacheio/pistache.git && \
-    cd pistache && \
-    meson setup build \
-    -DPISTACHE_USE_SSL=true \
-    --buildtype=release \
-    -Doptimization=3 && \
-    meson compile -C build && \
-    DESTDIR=/app/install meson install -C build
+# Configure Pistache build
+WORKDIR /tmp/pistache
 
-# Build the application optimized for production
-RUN mkdir -p build && \
-    cd build && \
-    cmake -DCMAKE_BUILD_TYPE=Release \
-          -DBUILD_TESTS=OFF \
-          -DCMAKE_CXX_FLAGS="-O3 -DNDEBUG" \
-          -DCMAKE_INSTALL_PREFIX=/app/install .. && \
-    make && \
-    make install
+RUN git -c advice.detachedHead=false checkout -q v0.4.26 \
+    && meson setup build \
+        --buildtype=release \
+        --prefix=/usr/local \
+        -DPISTACHE_USE_SSL=true
+
+# Build and install Pistache
+WORKDIR /tmp/pistache/build
+RUN meson compile \
+    && meson install \
+    && ldconfig
+
+# Cleanup and reset working directory
+WORKDIR /app
+RUN rm -rf /tmp/pistache
+
+# Build the application
+RUN rm -rf build \
+    && mkdir -p build \
+    && cd build \
+    && cmake -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_TESTS=OFF \
+        -DCMAKE_CXX_FLAGS="-O3 -DNDEBUG" \
+        .. \
+    && make -j$(nproc)
 
 # Runtime stage
-FROM ubuntu:22.04
+FROM debian:bookworm-slim
 
 # Install only the required runtime libraries
 RUN apt-get update && apt-get install -y \
@@ -57,19 +90,17 @@ RUN apt-get update && apt-get install -y \
     libssl3 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy built artifacts from builder
-COPY --from=builder /app/install/usr/local/lib/x86_64-linux-gnu/libpistache.so.* /usr/local/lib/x86_64-linux-gnu/
-COPY --from=builder /app/install/usr/local/bin/edge_agent /usr/local/bin/
-COPY --from=builder /app/config /config
-
-# Update library cache
+# Copy built artifacts and libraries
+COPY --from=builder /usr/local/lib/x86_64-linux-gnu/libpistache.so* /usr/local/lib/x86_64-linux-gnu/
+RUN mkdir -p /app
+COPY --from=builder /app/build/edge_agent /app/edge_agent
 RUN ldconfig
 
 # Set working directory
-WORKDIR /
+WORKDIR /app
 
 # Expose the port (default Pistache port 9081)
 EXPOSE 9081
 
-# Run the application
-CMD ["edge_agent"]
+# Set the entrypoint
+ENTRYPOINT ["/app/edge_agent"]

@@ -23,7 +23,7 @@ services:
       dockerfile: ${DOCKERFILE:-Dockerfile}
     container_name: edge-agent
     ports:
-      - "9082:9081"
+      - "9080:9080"
     depends_on:
       snmpd:
         condition: service_healthy

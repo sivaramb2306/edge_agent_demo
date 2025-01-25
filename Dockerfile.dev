@@ -6,50 +6,72 @@ RUN apt-get update && apt-get install -y \
     make \
     cmake \
     git \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y \
     libsnmp-dev \
-    snmp \
     libcurl4-openssl-dev \
     libssl-dev \
+    nlohmann-json3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install GTest and GMock
+RUN apt-get update && apt-get install -y \
     libgtest-dev \
     google-mock \
-    rapidjson-dev \
-    python3-pip \
-    ninja-build \
-    pkg-config \
-    nlohmann-json3-dev \
+    && cd /usr/src/googletest \
+    && cmake . \
+    && cmake --build . -j$(nproc) \
+    && cp -a lib/libg* /usr/lib/ \
+    && cd googlemock \
+    && cp -a include/gmock /usr/include/ \
+    && cd ../googletest \
+    && cp -a include/gtest /usr/include/ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install development tools
+RUN apt-get update && apt-get install -y \
     gdb \
     valgrind \
     vim \
-    && pip3 install meson \
-    && cd /usr/src/googletest && cmake . && make && make install \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
-WORKDIR /app
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    ninja-build \
+    && pip3 install meson \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy source code
+WORKDIR /app
 COPY . .
 
-# Clean any existing build artifacts
-RUN rm -rf build pistache
+RUN git -c advice.detachedHead=false clone -q https://github.com/pistacheio/pistache.git /tmp/pistache
 
-# Build and install Pistache with debug symbols
-RUN git clone https://github.com/pistacheio/pistache.git && \
-    cd pistache && \
-    meson setup build \
-    -DPISTACHE_USE_SSL=true \
-    --buildtype=debug && \
-    meson compile -C build && \
-    meson install -C build && \
-    ldconfig
+WORKDIR /tmp/pistache
+RUN git -c advice.detachedHead=false checkout -q v0.4.26 \
+    && meson setup build \
+        --buildtype=debug \
+        --prefix=/usr/local \
+        -DPISTACHE_USE_SSL=true
 
-# Build the application with debug symbols and tests
-RUN mkdir -p build && \
-    cd build && \
-    cmake -DCMAKE_BUILD_TYPE=Debug \
-          -DBUILD_TESTS=ON \
-          -DCMAKE_CXX_FLAGS="-g3 -O0" .. && \
-    make
+WORKDIR /tmp/pistache/build
+RUN meson compile \
+    && meson install \
+    && ldconfig
+
+WORKDIR /app
+RUN rm -rf /tmp/pistache build
+
+# Build the application with debug symbols and tests enabled
+RUN mkdir -p /app/build && cd /app/build \
+    && cmake -DCMAKE_BUILD_TYPE=Debug \
+        -DBUILD_TESTS=ON \
+        -DCMAKE_CXX_FLAGS="-g3 -O0" \
+        .. \
+    && make -j$(nproc)
+
+WORKDIR /app/build
 
 # Default command - run tests first then start the application
-CMD ["sh", "-c", "./build/snmp_client_test && ./build/edge_agent"]
+CMD ["sh", "-c", "./edge_agent"]

@@ -1,5 +1,5 @@
 ### Variables
-@host = http://localhost:9082
+@host = http://localhost:9080
 
 ### Get Hello Message
 GET {{host}}/hello

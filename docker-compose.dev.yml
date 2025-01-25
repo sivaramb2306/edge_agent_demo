@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  edge-agent:
+    image: edge-agent-dev
+    container_name: edge-agent-dev
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "9080:9080"
+    volumes:
+      - .:/app
+    restart: always
+    environment:
+      - SNMP_HOST=snmpd
+      - SNMP_PORT=161
+      - SNMP_COMMUNITY=public
+    depends_on:
+      - snmpd
+
+  snmpd:
+    build:
+      context: ./snmpd
+      dockerfile: Dockerfile
+    container_name: snmpd-dev
+    ports:
+      - "161:161/udp"
+    restart: always
