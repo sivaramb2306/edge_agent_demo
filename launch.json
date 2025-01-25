@@ -1,0 +1,94 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "SNMP Tests (All)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/snmp_client_test",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "SNMP Test - MibToOidConversion",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/snmp_client_test",
+            "args": ["--gtest_filter=SNMPClientTest.MibToOidConversion"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "SNMP Test - GetMibValue",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/snmp_client_test",
+            "args": ["--gtest_filter=SNMPClientTest.GetMibValue"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "SNMP Test - Integration",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/snmp_client_test",
+            "args": ["--gtest_filter=SNMPClientIntegrationTest.RealClientTest"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "MIBDIRS",
+                    "value": "${workspaceFolder}/mibs:/usr/share/snmp/mibs"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build",
+            "miDebuggerPath": "/usr/bin/gdb"
+        }
+    ]
+}

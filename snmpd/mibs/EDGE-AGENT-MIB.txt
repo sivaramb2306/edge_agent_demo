@@ -1,0 +1,46 @@
+EDGE-AGENT-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION, DisplayString
+        FROM SNMPv2-TC
+    OBJECT-GROUP, NOTIFICATION-GROUP
+        FROM SNMPv2-CONF;
+
+edgeAgentMIB MODULE-IDENTITY
+    LAST-UPDATED "202501240000Z"
+    ORGANIZATION "Edge Agent Organization"
+    CONTACT-INFO
+        "email: support@example.com"
+    DESCRIPTION
+        "MIB for Edge Agent monitoring and control"
+    ::= { enterprises 50000 }  -- Use your own enterprise number in production
+
+-- Edge Agent Objects
+edgeAgentObjects OBJECT IDENTIFIER ::= { edgeAgentMIB 1 }
+
+-- Status Group
+edgeAgentStatus OBJECT IDENTIFIER ::= { edgeAgentObjects 1 }
+
+edgeAgentOperState OBJECT-TYPE
+    SYNTAX      INTEGER {
+                    running(1),
+                    stopped(2),
+                    error(3)
+                }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current operational state of the Edge Agent"
+    ::= { edgeAgentStatus 1 }
+
+edgeAgentLastError OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Last error message from the Edge Agent"
+    ::= { edgeAgentStatus 2 }
+
+END

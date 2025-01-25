@@ -1,0 +1,1 @@
+/usr/share/snmp/mibs/RFC1155-SMI.txt

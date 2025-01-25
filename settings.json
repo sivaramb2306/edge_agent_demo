@@ -1,0 +1,35 @@
+{
+    "testMate.cpp.test.executables": "{build,Build,BUILD,out,Out,OUT}/**/*{test,Test,TEST}*",
+    "testMate.cpp.debug.configTemplate": {
+        "type": "cppdbg",
+        "MIMode": "gdb",
+        "program": "${exec}",
+        "args": ["${argsArray}"],
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "stopAtEntry": false,
+        "externalConsole": false,
+        "setupCommands": [
+            {
+                "description": "Enable pretty-printing for gdb",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+            }
+        ],
+        "sourceFileMap": {
+            "${workspaceFolder}": "${workspaceFolder}"
+        }
+    },
+    "C_Cpp.debug.enableBreakpointValidation": true,
+    "testMate.cpp.discovery.moduleConfigFile": "${workspaceFolder}/build/CTestTestfile.cmake",
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.configureArgs": [
+        "-DCMAKE_BUILD_TYPE=Debug",
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+    ],
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/**",
+        "${workspaceFolder}/include"
+    ],
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+}
