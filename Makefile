@@ -30,7 +30,15 @@ run: $(TARGET)
 	LD_LIBRARY_PATH=./pistache/build/src ./$(TARGET)
 
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -rf $(OBJS) $(TARGET) build/
+	$(DOCKER_COMPOSE) down
+	$(DOCKER) rmi edge-agent:latest || true
+
+dev-clean:
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml down
+	rm -rf build/
+	$(DOCKER) rmi edge-agent:dev edge-agent-dev || true
+	$(DOCKER) rmi $$(docker images | grep "edge-agent" | awk '{print $$1":"$$2}') 2>/dev/null || true
 
 # Docker targets
 image:
@@ -43,7 +51,7 @@ up:
 	$(DOCKER_COMPOSE) up -d
 
 build-up:
-	$(DOCKER_COMPOSE) build . -t edge-agent:latest
+	$(DOCKER) build . -t edge-agent:latest
 	$(DOCKER_COMPOSE) up -d
 
 restart-up:
@@ -54,7 +62,7 @@ dev-up:
 	$(DOCKER_COMPOSE) -f docker-compose.dev.yml up -d
 
 dev-build-up:
-	$(DOCKER_COMPOSE) -f docker-compose.dev.yml build
+	$(DOCKER) build . -t edge-agent:dev
 	$(DOCKER_COMPOSE) -f docker-compose.dev.yml up -d
 
 dev-restart-up:
