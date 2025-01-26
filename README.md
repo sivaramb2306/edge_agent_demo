@@ -1,48 +1,82 @@
-# Simple REST API Server in C++
+# Edge Agent
 
-This is a simple REST API server implemented in C++ using the Pistache framework.
+A C++ SNMP edge agent with REST API capabilities using Pistache framework.
 
 ## Prerequisites
 
-- C++17 compiler
-- Pistache library
-- Make build system
+- Docker
+- Make
 
-## Building the Project
+## Production Build and Run
 
-To build the project, run:
-
+### Building the Image
 ```bash
-make
+# Build the Docker image
+make image
+
+# Build and start containers
+make up
+
+# Build image and start containers in one command
+make build-up
+
+# Restart containers
+make restart-up
 ```
 
-## Running the Server
-
-After building, run the server:
-
+### Cleaning Up
 ```bash
-./rest_server
+# Stop containers, remove images and build artifacts
+make clean
 ```
 
-The server will start on port 9080.
+## Development Build and Run
 
-## Available Endpoints
-
-1. GET /hello
-   - Returns a "Hello, World!" message
-   
-2. POST /echo
-   - Echoes back the request body
-
-## Testing the API
-
-You can test the endpoints using curl:
-
+### Building for Development
 ```bash
-# Test GET /hello
-curl http://localhost:9080/hello
+# Build development image and start containers
+make dev-build-up
 
-# Test POST /echo
-curl -X POST -d "Hello Server" http://localhost:9080/echo
+# Start development containers without rebuilding
+make dev-up
+
+# Restart development containers
+make dev-restart-up
 ```
-# snmp_edge_agent
+
+### Development Container Usage
+```bash
+# Enter the development container
+docker exec -it edge-agent-dev bash
+
+# Inside container, build the project
+cd /app
+rm -rf build  # Clean any existing build
+meson setup build
+cd build
+meson compile
+```
+
+### Cleaning Up Development Environment
+```bash
+# Stop containers, remove dev images and build artifacts
+make dev-clean
+```
+
+## Available Make Commands
+
+| Command | Description |
+|---------|-------------|
+| `make image` | Build production Docker image |
+| `make up` | Start production containers |
+| `make build-up` | Build and start production containers |
+| `make restart-up` | Restart production containers |
+| `make clean` | Clean production environment |
+| `make dev-build-up` | Build and start development containers |
+| `make dev-up` | Start development containers |
+| `make dev-restart-up` | Restart development containers |
+| `make dev-clean` | Clean development environment |
+
+## API Endpoints
+
+The server runs on port 9080. Documentation for API endpoints coming soon.
