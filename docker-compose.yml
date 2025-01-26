@@ -21,23 +21,16 @@ services:
   edge-agent:
     build:
       context: .
-      dockerfile: ${DOCKERFILE:-Dockerfile}
+      dockerfile: Dockerfile
     container_name: edge-agent
     ports:
       - "9080:9080"
+    networks:
+      - edge-network
     restart: always
     depends_on:
       snmpd:
         condition: service_healthy
-    networks:
-      - edge-network
-    environment:
-      - SNMP_HOST=snmpd
-      - SNMP_PORT=161
-      - SNMP_COMMUNITY=public
-    volumes:
-      - ./config:/app/config
-      - ${PWD:-.}:/app  # Source code mounted for development
 
 networks:
   edge-network:

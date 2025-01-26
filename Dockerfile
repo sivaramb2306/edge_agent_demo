@@ -45,49 +45,51 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Copy source code
-COPY . .
+# Create MIB directories and set SNMP environment
+RUN mkdir -p /usr/share/snmp/mibs
+ENV MIBS=+ALL
+ENV MIBDIRS=/usr/share/snmp/mibs:/usr/share/snmp/mibs/ietf:/usr/share/snmp/mibs/iana:/usr/share/snmp/mibs/site
+ENV SNMP_PERSISTENT_DIR=/var/lib/snmp
 
-# Clone Pistache
-RUN git -c advice.detachedHead=false clone -q https://github.com/pistacheio/pistache.git /tmp/pistache
+# Copy source files and MIBs
+COPY CMakeLists.txt main.cpp snmp_client.hpp ./
+COPY include/ include/
+COPY snmpd/powernet455.txt /usr/share/snmp/mibs/PowerNet-MIB.txt
+COPY snmpd/mibs/ /usr/share/snmp/mibs/
 
-# Configure Pistache build
-WORKDIR /tmp/pistache
-
-RUN git -c advice.detachedHead=false checkout -q v0.4.26 \
+# Clone and build Pistache
+RUN git -c advice.detachedHead=false clone -q https://github.com/pistacheio/pistache.git /tmp/pistache \
+    && cd /tmp/pistache \
+    && git -c advice.detachedHead=false checkout -q v0.4.26 \
     && meson setup build \
         --buildtype=release \
         --prefix=/usr/local \
-        -DPISTACHE_USE_SSL=true
-
-# Build and install Pistache
-WORKDIR /tmp/pistache/build
-RUN meson compile \
+        -DPISTACHE_USE_SSL=true \
+    && cd build \
+    && meson compile \
     && meson install \
-    && ldconfig
-
-# Cleanup and reset working directory
-WORKDIR /app
-RUN rm -rf /tmp/pistache
+    && ldconfig \
+    && cd /app \
+    && rm -rf /tmp/pistache
 
 # Build the application
-RUN rm -rf build \
-    && mkdir -p build \
+RUN mkdir -p build \
     && cd build \
     && cmake -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_TESTS=OFF \
         -DCMAKE_CXX_FLAGS="-O3 -DNDEBUG" \
         .. \
-    && make -j$(nproc)
+    && make -j$(nproc) \
+    && ls -la edge-agent \
+    && cp edge-agent /app/ \
+    && chmod +x /app/edge-agent
 
 # Runtime stage
 FROM debian:bookworm-slim
 
-# Enable non-free repository
-RUN echo "deb http://deb.debian.org/debian bookworm contrib non-free" >> /etc/apt/sources.list
-
-# Install only the required runtime libraries
-RUN apt-get update && apt-get install -y \
+# Install runtime dependencies
+RUN echo "deb http://deb.debian.org/debian bookworm contrib non-free" >> /etc/apt/sources.list \
+    && apt-get update && apt-get install -y \
     libsnmp40 \
     libcurl4 \
     libssl3 \
@@ -98,22 +100,22 @@ RUN apt-get update && apt-get install -y \
 
 # Copy built artifacts and libraries
 COPY --from=builder /usr/local/lib/x86_64-linux-gnu/libpistache.so* /usr/local/lib/x86_64-linux-gnu/
-RUN mkdir -p /app
-COPY --from=builder /app/build/edge-agent /app/edge-agent
+RUN mkdir -p /app /usr/share/snmp/mibs
+COPY --from=builder /app/edge-agent /app/
+RUN chmod +x /app/edge-agent
+COPY --from=builder /usr/share/snmp/mibs/ /usr/share/snmp/mibs/
 RUN ldconfig
 
-# Create MIB directories
-RUN mkdir -p /usr/share/snmp/mibs
-
-# Copy MIBs
-COPY snmpd/powernet455.txt /usr/share/snmp/mibs/PowerNet-MIB.txt
-COPY snmpd/mibs/ /usr/share/snmp/mibs/
+# Set SNMP environment variables
+ENV MIBS=+ALL
+ENV MIBDIRS=/usr/share/snmp/mibs:/usr/share/snmp/mibs/ietf:/usr/share/snmp/mibs/iana:/usr/share/snmp/mibs/site
+ENV SNMP_PERSISTENT_DIR=/var/lib/snmp
 
 # Set working directory
 WORKDIR /app
 
-# Expose the port (default port 9080)
+# Expose the port
 EXPOSE 9080
 
 # Set the entrypoint
-ENTRYPOINT ["/app/edge-agent"]
+CMD ["./edge-agent"]

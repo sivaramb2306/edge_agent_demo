@@ -43,7 +43,7 @@ up:
 	$(DOCKER_COMPOSE) up -d
 
 build-up:
-	$(DOCKER_COMPOSE) build
+	$(DOCKER_COMPOSE) build . -t edge-agent:latest
 	$(DOCKER_COMPOSE) up -d
 
 restart-up:
