@@ -21,16 +21,13 @@ public:
         init_snmp("edge_agent");
         
         // Set the MIB directory environment variable
-        setenv("MIBDIRS", (mibDir + ":/usr/share/snmp/mibs").c_str(), 1);
+        std::string mibDirs = mibDir + ":/usr/share/snmp/mibs:/usr/share/snmp/mibs/ietf:/usr/share/snmp/mibs/iana:/usr/share/snmp/mibs/site";
+        setenv("MIBDIRS", mibDirs.c_str(), 1);
         
         // Initialize MIB
         init_mib();
         
-        // Add MIB directories
-        add_mibdir("/usr/share/snmp/mibs");
-        add_mibdir(mibDir.c_str());
-        
-        std::cout << "MIB search path: " << mibDir << ":/usr/share/snmp/mibs" << std::endl;
+        std::cout << "MIB search path: " << mibDirs << std::endl;
         
         // Load required MIB modules in correct order
         const char* mibs_to_load[] = {
@@ -47,23 +44,16 @@ public:
                 std::cerr << "Warning: Failed to load MIB module: " << *mib << std::endl;
             }
         }
-        
-        // Refresh the MIB tree
-        shutdown_mib();
-        init_mib();
     }
 
     ~SNMPClient() override {
-        shutdown_mib();
+        snmp_shutdown("edge_agent");
     }
 
     // Convert MIB name to OID using Net-SNMP library functions
     std::string mibToOid(const std::string& mibName) override {
         oid objid[MAX_OID_LEN];
         size_t objidlen = MAX_OID_LEN;
-        
-        // Initialize MIB
-        netsnmp_init_mib();
         
         // Convert MIB name to OID
         if (!snmp_parse_oid(mibName.c_str(), objid, &objidlen)) {
@@ -127,11 +117,7 @@ public:
         session.community_len = community.length();
 
         // Open session
-        std::unique_ptr<netsnmp_session, decltype(&snmp_close)> ss(
-            snmp_open(&session),
-            snmp_close
-        );
-
+        void* ss = snmp_sess_open(&session);
         if (!ss) {
             free(session.peername);
             free(session.community);
@@ -139,22 +125,19 @@ public:
         }
 
         // Create PDU
-        std::unique_ptr<netsnmp_pdu, decltype(&snmp_free_pdu)> pdu(
-            snmp_pdu_create(SNMP_MSG_GET),
-            snmp_free_pdu
-        );
-
-        snmp_add_null_var(pdu.get(), objid, objid_len);
+        netsnmp_pdu* pdu = snmp_pdu_create(SNMP_MSG_GET);
+        snmp_add_null_var(pdu, objid, objid_len);
 
         // Send PDU
         netsnmp_pdu* response = nullptr;
-        int status = snmp_synch_response(ss.get(), pdu.get(), &response);
+        int status = snmp_sess_synch_response(ss, pdu, &response);
 
         // Clean up session parameters
         free(session.peername);
         free(session.community);
 
         if (status != STAT_SUCCESS || !response) {
+            snmp_sess_close(ss);
             throw std::runtime_error("SNMP request failed");
         }
 
@@ -170,6 +153,7 @@ public:
         }
 
         snmp_free_pdu(response);
+        snmp_sess_close(ss);
         return result;
     }
 };

@@ -6,7 +6,7 @@ TARGET = rest_server
 SRCS = main.cpp
 OBJS = $(SRCS:.cpp=.o)
 
-DOCKER_COMPOSE = docker-compose
+DOCKER_COMPOSE = docker compose
 DOCKER = docker
 
 .PHONY: all clean run image dev-image up build-up restart-up dev-up dev-build-up dev-restart-up

@@ -21,16 +21,16 @@ find_library(NETSNMP_LIBRARY netsnmp)
 find_path(NETSNMP_INCLUDE_DIR net-snmp/net-snmp-config.h)
 
 # Main executable
-add_executable(edge_agent 
+add_executable(rest_server 
     main.cpp
 )
 
-target_include_directories(edge_agent PRIVATE
+target_include_directories(rest_server PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${NETSNMP_INCLUDE_DIR}
 )
 
-target_link_libraries(edge_agent
+target_link_libraries(rest_server
     ${PISTACHE_LIBRARIES}
     ${NETSNMP_LIBRARY}
     nlohmann_json::nlohmann_json

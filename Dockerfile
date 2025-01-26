@@ -88,13 +88,20 @@ RUN apt-get update && apt-get install -y \
     libsnmp40 \
     libcurl4 \
     libssl3 \
+    snmp \
+    snmp-mibs-downloader \
+    && download-mibs \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy built artifacts and libraries
 COPY --from=builder /usr/local/lib/x86_64-linux-gnu/libpistache.so* /usr/local/lib/x86_64-linux-gnu/
 RUN mkdir -p /app
-COPY --from=builder /app/build/edge_agent /app/edge_agent
+COPY --from=builder /app/build/rest_server /app/rest_server
 RUN ldconfig
+
+# Copy MIBs from snmpd
+COPY snmpd/powernet455.txt /usr/share/snmp/mibs/PowerNet-MIB.txt
+COPY snmpd/mibs/* /usr/share/snmp/mibs/
 
 # Set working directory
 WORKDIR /app
@@ -103,4 +110,4 @@ WORKDIR /app
 EXPOSE 9081
 
 # Set the entrypoint
-ENTRYPOINT ["/app/edge_agent"]
+ENTRYPOINT ["/app/rest_server"]

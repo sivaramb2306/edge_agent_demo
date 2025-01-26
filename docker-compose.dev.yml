@@ -16,6 +16,7 @@ services:
       - SNMP_HOST=snmpd
       - SNMP_PORT=161
       - SNMP_COMMUNITY=public
+    command: sh -c "cd /app && mkdir -p build && cd build && cmake .. && make && ./rest_server"
     depends_on:
       - snmpd
 
