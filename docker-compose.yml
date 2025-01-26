@@ -1,5 +1,5 @@
 version: '3.8'
-
+name: edge-agent-services
 services:
   snmpd:
     build:

@@ -1,5 +1,7 @@
 version: '3'
 
+name: edge-agent-services-dev
+
 services:
   edge-agent:
     image: edge-agent-dev
