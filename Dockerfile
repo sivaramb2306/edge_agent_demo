@@ -83,6 +83,9 @@ RUN rm -rf build \
 # Runtime stage
 FROM debian:bookworm-slim
 
+# Enable non-free repository
+RUN echo "deb http://deb.debian.org/debian bookworm contrib non-free" >> /etc/apt/sources.list
+
 # Install only the required runtime libraries
 RUN apt-get update && apt-get install -y \
     libsnmp40 \
@@ -99,15 +102,18 @@ RUN mkdir -p /app
 COPY --from=builder /app/build/rest_server /app/rest_server
 RUN ldconfig
 
-# Copy MIBs from snmpd
+# Create MIB directories
+RUN mkdir -p /usr/share/snmp/mibs
+
+# Copy MIBs
 COPY snmpd/powernet455.txt /usr/share/snmp/mibs/PowerNet-MIB.txt
-COPY snmpd/mibs/* /usr/share/snmp/mibs/
+COPY snmpd/mibs/ /usr/share/snmp/mibs/
 
 # Set working directory
 WORKDIR /app
 
-# Expose the port (default Pistache port 9081)
-EXPOSE 9081
+# Expose the port (default port 9080)
+EXPOSE 9080
 
 # Set the entrypoint
 ENTRYPOINT ["/app/rest_server"]

@@ -6,7 +6,14 @@ TARGET = rest_server
 SRCS = main.cpp
 OBJS = $(SRCS:.cpp=.o)
 
-DOCKER_COMPOSE = docker compose
+# Check if docker compose v2 is available, otherwise use docker-compose
+DOCKER_COMPOSE_V2 := $(shell which docker > /dev/null 2>&1 && docker compose version > /dev/null 2>&1 && echo "yes" || echo "no")
+ifeq ($(DOCKER_COMPOSE_V2),yes)
+    DOCKER_COMPOSE = docker compose
+else
+    DOCKER_COMPOSE = docker-compose
+endif
+
 DOCKER = docker
 
 .PHONY: all clean run image dev-image up build-up restart-up dev-up dev-build-up dev-restart-up
@@ -27,32 +34,32 @@ clean:
 
 # Docker targets
 image:
-	docker build -t edge-agent:latest -f Dockerfile .
+	$(DOCKER) build -t edge-agent:latest -f Dockerfile .
 
 dev-image:
-	docker build -t edge-agent:dev -f Dockerfile.dev .
+	$(DOCKER) build -t edge-agent:dev -f Dockerfile.dev .
 
 up:
-	docker-compose up -d
+	$(DOCKER_COMPOSE) up -d
 
 build-up:
-	docker-compose build
-	docker-compose up -d
+	$(DOCKER_COMPOSE) build
+	$(DOCKER_COMPOSE) up -d
 
 restart-up:
-	docker-compose down
-	docker-compose up -d
+	$(DOCKER_COMPOSE) down
+	$(DOCKER_COMPOSE) up -d
 
 dev-up:
-	DOCKERFILE=Dockerfile.dev docker-compose up -d
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml up -d
 
 dev-build-up:
-	DOCKERFILE=Dockerfile.dev docker-compose build
-	DOCKERFILE=Dockerfile.dev docker-compose up -d
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml build
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml up -d
 
 dev-restart-up:
-	DOCKERFILE=Dockerfile.dev docker-compose down
-	DOCKERFILE=Dockerfile.dev docker-compose up -d
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml down
+	$(DOCKER_COMPOSE) -f docker-compose.dev.yml up -d
 
 # Production targets
 .PHONY: build
