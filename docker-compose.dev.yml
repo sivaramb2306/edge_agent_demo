@@ -16,7 +16,7 @@ services:
       - SNMP_HOST=snmpd
       - SNMP_PORT=161
       - SNMP_COMMUNITY=public
-    command: sh -c "cd /app && rm -rf build && mkdir -p build && cd build && cmake .. && make && ./rest_server"
+    command: sh -c "cd /app && rm -rf build && mkdir -p build && cd build && cmake .. && make && ./edge-agent"
     depends_on:
       - snmpd
 

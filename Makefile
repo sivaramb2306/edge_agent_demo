@@ -2,7 +2,7 @@ CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -I. -I./pistache/include `net-snmp-config --cflags`
 LDFLAGS = -L./pistache/build/src -lpistache -lpthread -lnetsnmp `net-snmp-config --libs`
 
-TARGET = rest_server
+TARGET = edge-agent
 SRCS = main.cpp
 OBJS = $(SRCS:.cpp=.o)
 

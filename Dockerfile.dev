@@ -89,4 +89,4 @@ WORKDIR /app/build
 EXPOSE 9080
 
 # Default command - show directory contents and run the server
-CMD ["sh", "-c", "ls -la && pwd && ./rest_server"]
+CMD ["sh", "-c", "ls -la && pwd && ./edge-agent"]
